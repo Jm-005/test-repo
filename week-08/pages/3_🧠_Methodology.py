@@ -23,7 +23,7 @@ st.write(
 
 st.markdown("### App architecture")
 st.write(
-    "1. **Document ingestion**: Admins upload `.txt` files, which are converted into embeddings and stored in a Chroma vector database."
+    "1. **Document ingestion**: the app loads backend web, PDF, and Excel sources and converts them into embeddings stored in a Chroma vector database."
 )
 st.write(
     "2. **Vector search**: When a user asks a question, the app encodes the question and retrieves the most relevant document passages from the vector store."

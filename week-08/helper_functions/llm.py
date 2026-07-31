@@ -1,10 +1,10 @@
 import io
 import os
-import uuid
 from pathlib import Path
 import requests
 import tiktoken
 import streamlit as st
+import pandas as pd
 from bs4 import BeautifulSoup
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -139,6 +139,33 @@ def _load_pdf_bytes(buffer: bytes) -> str:
     return "\n\n".join(pages).strip()
 
 
+def _load_excel_file(path: Path) -> str:
+    try:
+        sheets = pd.read_excel(path, sheet_name=None)
+    except Exception:
+        return ""
+
+    sections = []
+    for sheet_name, df in sheets.items():
+        if df.empty:
+            continue
+        table_text = df.astype(str).fillna("").to_csv(index=False)
+        sections.append(f"Sheet: {sheet_name}\n{table_text}")
+
+    return "\n\n".join(sections).strip()
+
+
+def _get_existing_ids() -> set:
+    existing_ids = set()
+    data = collection.get(include=["ids"])
+    if data and data.get("ids"):
+        raw_ids = data["ids"]
+        if isinstance(raw_ids, list) and raw_ids and isinstance(raw_ids[0], list):
+            existing_ids.update(raw_ids[0])
+        else:
+            existing_ids.update(raw_ids)
+    return existing_ids
+
 REMOTE_PDFS = {
     "etaxguide_gst_invoicenow_requirement.pdf": "https://www.iras.gov.sg/media/docs/default-source/uploadedfiles/gst/etaxguide_gst_invoicenow_requirement.pdf?sfvrsn=d2828aad_35",
     "invoicenow-brochure.pdf": "https://file.go.gov.sg/invoicenow-brochure.pdf",
@@ -161,10 +188,13 @@ def _extract_text_from_html(html: str) -> str:
 
 
 def _load_document_file(path: Path) -> str:
-    if path.suffix.lower() == ".pdf":
+    suffix = path.suffix.lower()
+    if suffix == ".pdf":
         return _load_pdf_bytes(path.read_bytes())
-    if path.suffix.lower() == ".txt":
+    if suffix == ".txt":
         return _load_text_file(path)
+    if suffix in {".xls", ".xlsx"}:
+        return _load_excel_file(path)
     return ""
 
 
@@ -211,27 +241,46 @@ def download_remote_documents():
     return downloaded, errors
 
 
-def populate_sample_documents():
-    if collection.count() > 0:
-        return 0
-
+def _load_local_documents():
     sample_dir = Path(__file__).resolve().parents[1] / "sample_docs"
     if not sample_dir.exists():
-        return 0
+        return []
 
     docs = []
     ids = []
     metadatas = []
-    for doc_path in sorted(sample_dir.glob("*")):
-        if doc_path.suffix.lower() not in {".txt", ".pdf"}:
+    existing_ids = _get_existing_ids()
+
+    candidate_paths = set()
+    if sample_dir.exists():
+        candidate_paths.update(sample_dir.glob("*"))
+
+    # Also include any Excel files found in the parent assignment folder
+    assignment_root = Path(__file__).resolve().parents[2]
+    for p in assignment_root.glob("*.xls*"):
+        if not p.name.startswith("~$"):
+            candidate_paths.add(p)
+
+    for doc_path in sorted(candidate_paths):
+        if doc_path.suffix.lower() not in {".txt", ".pdf", ".xls", ".xlsx"}:
             continue
         text = _load_document_file(doc_path)
         if not text.strip():
             continue
+
+        doc_id = f"sample-{doc_path.name}"
+        if doc_id in existing_ids:
+            continue
+
         docs.append(text)
-        ids.append(f"sample-{doc_path.name}")
+        ids.append(doc_id)
         metadatas.append({"source": doc_path.name})
 
+    return docs, ids, metadatas
+
+
+def populate_sample_documents():
+    docs, ids, metadatas = _load_local_documents()
     if docs:
         add_documents_to_vectorstore(docs, ids, metadatas=metadatas)
     return len(docs)

@@ -31,7 +31,7 @@ if not check_password():
 
 st.title("💬 RAG Chatbot")
 st.write(
-    "This prototype supports role-based document management and retrieval-augmented generation using a Chroma vector store."
+    "This prototype automatically ingests InvoiceNow web pages, PDFs, and Excel sources in the backend so users can ask questions without uploading files."
 )
 
 if "query_history" not in st.session_state:
@@ -40,21 +40,20 @@ if "query_history" not in st.session_state:
 if "last_answer" not in st.session_state:
     st.session_state.last_answer = ""
 
-role = st.sidebar.radio("Role", ["User", "Admin"], index=0)
-
 st.sidebar.markdown("---")
-if st.sidebar.button("Load sample documents"):
-    count = populate_sample_documents()
-    if count > 0:
-        st.sidebar.success(f"Loaded {count} sample documents into the vector store.")
-    else:
-        st.sidebar.info("Sample documents are already loaded or missing.")
-
 if st.sidebar.button("Reset document store"):
     reset_vectorstore()
-    st.sidebar.warning("Document store reset. Upload files or load sample documents again.")
+    st.sidebar.warning("Document store reset. The app will reload backend sources on the next query.")
 
-if st.sidebar.button("Fetch remote InvoiceNow sources"):
+st.sidebar.markdown(f"**Documents indexed:** {collection_count()}")
+
+st.header("🔍 RAG Query")
+st.write(
+    "Ask a question and the app will retrieve relevant passages from the automatically ingested backend documents."
+)
+
+if collection_count() == 0:
+    st.warning("No documents are currently indexed. Fetching backend sources and indexing now...")
     downloaded, errors = download_remote_documents()
     for filename, status in downloaded:
         if status == "downloaded":
@@ -63,79 +62,25 @@ if st.sidebar.button("Fetch remote InvoiceNow sources"):
             st.sidebar.info(f"Skipped existing {filename}")
     for filename, error in errors:
         st.sidebar.error(f"Failed {filename}: {error}")
-    st.sidebar.info("Then click 'Load sample documents' to index the fetched sources.")
 
-st.sidebar.markdown(f"**Documents indexed:** {collection_count()}")
-
-# ── Admin panel ─────────────────────────────────────────────────────────────
-if role == "Admin":
-    st.header("📄 Admin — Document Management")
-    st.write(
-        "Upload `.txt` documents to index them in the vector store. This enables the User role to ask context-aware questions."
-    )
-
-    uploaded_files = st.file_uploader(
-        "Upload documents",
-        type=["txt", "pdf"],
-        accept_multiple_files=True,
-        help="Each file is stored as a separate document in the vector store.",
-    )
-
-    if uploaded_files:
-        if st.button("Add uploaded documents"):
-            docs, ids, metadatas = [], [], []
-            for uploaded_file in uploaded_files:
-                file_bytes = uploaded_file.getvalue()
-                if uploaded_file.name.lower().endswith(".pdf"):
-                    content = pdf_bytes_to_text(file_bytes)
-                else:
-                    content = file_bytes.decode("utf-8", errors="ignore").strip()
-                if not content:
-                    continue
-                doc_id = f"uploaded-{uuid.uuid4()}"
-                docs.append(content)
-                ids.append(doc_id)
-                metadatas.append({"source": uploaded_file.name})
-
-            if docs:
-                add_documents_to_vectorstore(docs, ids, metadatas=metadatas)
-                st.success(f"Indexed {len(docs)} document(s) into the vector store.")
-            else:
-                st.error("No valid text content found in uploaded files.")
-
-    st.markdown("### Current indexed documents")
-    docs = get_all_documents()
-    if docs:
-        for doc_id, metadata, content in docs:
-            st.write(f"**{metadata.get('source', doc_id)}**")
-            st.caption(f"ID: {doc_id}")
-            st.write(content[:250] + ("..." if len(content) > 250 else ""))
-            st.markdown("---")
+    count = populate_sample_documents()
+    if count > 0:
+        st.success(f"Indexed {count} backend document(s) into the vector store.")
     else:
-        st.info("No documents are currently indexed. Upload files or load sample documents.")
+        st.info("No new backend documents were indexed.")
 
-# ── User panel ──────────────────────────────────────────────────────────────
-else:
-    st.header("🔍 User — RAG Query")
-    st.write(
-        "Ask a question and the app will retrieve relevant passages from the indexed documents before answering."
-    )
+query = st.text_input("Enter your question", placeholder="Ask about InvoiceNow requirements, FAQs, or GIN tracker details.")
+top_k = st.slider("Number of retrieved documents", min_value=1, max_value=5, value=3)
+summarize = st.checkbox("Provide a short summary for the answer", value=False)
 
-    if collection_count() == 0:
-        st.warning("No documents are currently indexed. Ask an Admin to upload documents or load sample documents.")
-
-    query = st.text_input("Enter your question", placeholder="What can this document set tell me?")
-    top_k = st.slider("Number of retrieved documents", min_value=1, max_value=5, value=3)
-    summarize = st.checkbox("Provide a short summary for the answer", value=False)
-
-    if query and st.button("Get Answer"):
-        answer, sources = query_with_rag(query, top_k=top_k)
-        st.session_state.last_answer = answer
-        st.session_state.query_history.append({
-            "question": query,
-            "answer": answer,
-            "sources": sources,
-        })
+if query and st.button("Get Answer"):
+    answer, sources = query_with_rag(query, top_k=top_k)
+    st.session_state.last_answer = answer
+    st.session_state.query_history.append({
+        "question": query,
+        "answer": answer,
+        "sources": sources,
+    })
 
     if st.session_state.last_answer:
         st.subheader("Answer")

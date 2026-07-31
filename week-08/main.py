@@ -25,10 +25,9 @@ st.write(
     """
 Welcome to the RAG-enabled AI Assistant prototype.
 
-This app supports:
-- 📄 **Document management** — Admins can upload text files and refresh the vector store
-- 🔍 **RAG-based query** — Users ask questions and the app retrieves relevant document content
-- 📝 **Summarization and export** — Users can summarize and download answers
+This app automatically ingests InvoiceNow webpages, PDFs, and Excel sources as backend documents.
+- 🔍 **RAG-based query** — Ask questions and the app retrieves relevant passages from the indexed sources.
+- 📝 **Summarization and export** — Summarize and download answers.
 
 Use the left sidebar to switch between the **Chatbot**, **About Us**, and **Methodology** pages.
 """

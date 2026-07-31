@@ -18,14 +18,14 @@ if not check_password():
 st.title("ℹ️ About Us")
 
 st.write(
-    "This prototype is designed to demonstrate a simple role-based RAG web app built with Streamlit."
+    "This prototype is designed to demonstrate a Streamlit-based RAG assistant that automatically ingests backend documents for user queries."
 )
 
 st.markdown("### What this app delivers")
 st.write(
-    "- **Admin upload flow**: an admin can upload documents that are indexed into a vector store."
+    "- **Auto ingestion**: web pages, PDFs, and Excel sources are loaded on the backend and indexed into a vector store."
 )
-st.write("- **Query experience**: users ask questions and receive answers grounded in the uploaded documents.")
+st.write("- **Query experience**: users ask questions and receive answers grounded in the indexed documents.")
 st.write("- **Results export**: answers can be downloaded as text for later use.")
 
 st.markdown("### Who is this for?")
