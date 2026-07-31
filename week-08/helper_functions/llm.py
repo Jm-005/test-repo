@@ -100,7 +100,12 @@ def collection_count() -> int:
 
 
 def get_all_documents():
-    data = collection.get(include=["documents", "metadatas", "ids"])
+    try:
+        data = collection.get(include=["documents", "metadatas", "ids"])
+    except Exception:
+        # Some chromadb versions validate include values differently;
+        # fall back to a plain get() and extract available keys.
+        data = collection.get()
     docs = data.get("documents", [])
     metas = data.get("metadatas", [])
     ids = data.get("ids", [])
@@ -157,7 +162,11 @@ def _load_excel_file(path: Path) -> str:
 
 def _get_existing_ids() -> set:
     existing_ids = set()
-    data = collection.get(include=["ids"])
+    try:
+        data = collection.get(include=["ids"])
+    except Exception:
+        # fall back if the chromadb version rejects the include parameter
+        data = collection.get()
     if data and data.get("ids"):
         raw_ids = data["ids"]
         if isinstance(raw_ids, list) and raw_ids and isinstance(raw_ids[0], list):
@@ -290,13 +299,23 @@ def query_with_rag(question, top_k=3):
     if collection.count() == 0:
         return "No documents are loaded yet. Upload files or refresh the app.", []
 
-    results = collection.query(
-        query_texts=[question],
-        n_results=top_k,
-        include=["documents", "metadatas"],
-    )
-    retrieved_docs = results["documents"][0] if results.get("documents") else []
-    retrieved_metas = results["metadatas"][0] if results.get("metadatas") else []
+    try:
+        results = collection.query(
+            query_texts=[question],
+            n_results=top_k,
+            include=["documents", "metadatas"],
+        )
+    except Exception:
+        # Some chromadb versions may validate the include list differently;
+        # retry without include and parse whatever is returned.
+        results = collection.query(
+            query_texts=[question],
+            n_results=top_k,
+        )
+    retrieved_docs = results.get("documents", [])
+    retrieved_docs = retrieved_docs[0] if retrieved_docs else []
+    retrieved_metas = results.get("metadatas", [])
+    retrieved_metas = retrieved_metas[0] if retrieved_metas else []
 
     if not retrieved_docs:
         return "I could not find relevant information in the current document set.", []
