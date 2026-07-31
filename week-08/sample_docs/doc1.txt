@@ -1,0 +1,3 @@
+Document 1: Project Overview
+
+This sample document describes a simple knowledge base for a retrieval-augmented generation app. The app indexes text documents and answers user questions by retrieving the most relevant content.

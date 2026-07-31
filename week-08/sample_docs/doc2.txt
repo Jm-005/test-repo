@@ -1,0 +1,3 @@
+Document 2: Deployment Guidance
+
+The app uses Streamlit for the frontend and Chroma for the vector store. Deployment can be performed on Streamlit Cloud or similar hosting. The system uses OpenAI's embedding and chat completion APIs.

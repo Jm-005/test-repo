@@ -3,3 +3,7 @@ streamlit
 pandas
 python-dotenv
 tiktoken
+chromadb
+pypdf
+requests
+beautifulsoup4

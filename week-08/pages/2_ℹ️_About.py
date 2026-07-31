@@ -5,7 +5,7 @@ from helper_functions.utility import check_password
 
 st.set_page_config(
     layout="centered",
-    page_title="About",
+    page_title="About Us",
     page_icon="ℹ️",
 )
 
@@ -15,25 +15,25 @@ if not check_password():
 
 # endregion <--------- Streamlit Page Configuration --------->
 
-st.title("ℹ️ About This App")
+st.title("ℹ️ About Us")
 
-st.write("""
-This is an AI Chatbot built with **Streamlit** and **OpenAI**.
+st.write(
+    "This prototype is designed to demonstrate a simple role-based RAG web app built with Streamlit."
+)
 
-### Features
-- 💬 **Conversational AI** — Chat naturally with GPT-4o-mini
-- 🔒 **Password Protected** — Secure access with a shared password
-- 🔄 **Streaming Responses** — See the AI's reply as it's generated
-- 📊 **Token Tracking** — Monitor estimated token usage in the sidebar
+st.markdown("### What this app delivers")
+st.write(
+    "- **Admin upload flow**: an admin can upload documents that are indexed into a vector store."
+)
+st.write("- **Query experience**: users ask questions and receive answers grounded in the uploaded documents.")
+st.write("- **Results export**: answers can be downloaded as text for later use.")
 
-### Tech Stack
-| Component | Tool |
-|---|---|
-| UI Framework | [Streamlit](https://streamlit.io/) |
-| Language Model | [OpenAI GPT-4o-mini](https://openai.com/) |
-| Token Counting | [tiktoken](https://github.com/openai/tiktoken) |
-| Backend | Python 3.10+ |
+st.markdown("### Who is this for?")
+st.write(
+    "This project is suitable for an educational AI prototype, product demos, and early-stage research into document-based retrieval systems."
+)
 
-### Disclaimer
-*This application is for educational and demonstration purposes. The information provided by the AI should not be taken as professional advice.*
-""")
+st.markdown("### Contact")
+st.write(
+    "If you want to extend this app, add richer file format support (PDF, DOCX), deploy to Streamlit Cloud, or connect a real database for user sessions."
+)
