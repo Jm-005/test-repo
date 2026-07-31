@@ -7,3 +7,4 @@ chromadb
 pypdf
 requests
 beautifulsoup4
+pysqlite3-binary

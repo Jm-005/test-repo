@@ -8,6 +8,11 @@ import streamlit as st
 from bs4 import BeautifulSoup
 from openai import OpenAI
 from dotenv import load_dotenv
+
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
