@@ -26,11 +26,9 @@ CHAT_MODEL = "gpt-4o-mini"
 CHROMA_DIR = Path(__file__).resolve().parents[1] / "chromadb"
 CHROMA_DIR.mkdir(parents=True, exist_ok=True)
 
-chroma_client = chromadb.Client(
-    Settings(
-        chroma_db_impl="duckdb+parquet",
-        persist_directory=str(CHROMA_DIR),
-    )
+chroma_client = chromadb.PersistentClient(
+    path="./chroma_db",
+    settings=Settings(anonymized_telemetry=False)
 )
 
 embedding_function = embedding_functions.OpenAIEmbeddingFunction(
