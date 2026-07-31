@@ -18,6 +18,17 @@ from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from pypdf import PdfReader
 
+def pdf_bytes_to_text(pdf_bytes: bytes) -> str:
+    """Extracts text content from PDF byte data."""
+    pdf_file = io.BytesIO(pdf_bytes)
+    reader = PdfReader(pdf_file)
+    text = ""
+    for page in reader.pages:
+        extracted = page.extract_text()
+        if extracted:
+            text += extracted + "\n"
+    return text
+
 if load_dotenv('.env'):
     # for local development
     OPENAI_KEY = os.getenv('OPENAI_API_KEY')
