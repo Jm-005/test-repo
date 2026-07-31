@@ -29,11 +29,18 @@ def pdf_bytes_to_text(pdf_bytes: bytes) -> str:
             text += extracted + "\n"
     return text
 
-if load_dotenv('.env'):
-    # for local development
-    OPENAI_KEY = os.getenv('OPENAI_API_KEY')
-else:
-    OPENAI_KEY = st.secrets['OPENAI_API_KEY']
+load_dotenv('.env')
+OPENAI_KEY = os.getenv('OPENAI_API_KEY')
+if not OPENAI_KEY:
+    try:
+        OPENAI_KEY = st.secrets['OPENAI_API_KEY']
+    except Exception:
+        OPENAI_KEY = None
+
+if not OPENAI_KEY:
+    raise RuntimeError(
+        'OPENAI_API_KEY is required. Set it in .env or Streamlit secrets.'
+    )
 
 client = OpenAI(api_key=OPENAI_KEY)
 
